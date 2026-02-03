@@ -1,38 +1,32 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
 from .models import Blog, Comment
 
-# User Registration
-class RegisterSerializer(serializers.ModelSerializer):
+class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.StringRelatedField()
+
     class Meta:
-        model = User
-        fields = ['username', 'email', 'password']
-        extra_kwargs = {'password': {'write_only': True}}
+        model = Comment
+        fields = ["id", "author", "content", "created_at"]
 
-    def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
-
-
-# Blog Serializer
-class BlogSerializer(serializers.ModelSerializer):
-    likes_count = serializers.SerializerMethodField()
-    comments_count = serializers.SerializerMethodField()
+class BlogListSerializer(serializers.ModelSerializer):
+    author = serializers.StringRelatedField()
+    likes_count = serializers.IntegerField(read_only=True)
+    comments_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Blog
-        fields = '__all__'
-        read_only_fields = ['author']
+        fields = ["id", "title", "author", "likes_count", "comments_count", "created_at"]
 
-    def get_likes_count(self, obj):
-        return obj.likes.count()
+class BlogDetailSerializer(serializers.ModelSerializer):
+    author = serializers.StringRelatedField()
+    likes_count = serializers.IntegerField(read_only=True)
+    comments_count = serializers.IntegerField(read_only=True)
+    latest_comments = serializers.SerializerMethodField()
 
-    def get_comments_count(self, obj):
-        return obj.comments.count()
-
-
-# Comment Serializer
-class CommentSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Comment
-        fields = '__all__'
-        read_only_fields = ['user', 'blog']
+        model = Blog
+        fields = ["id", "title", "content", "author", "likes_count", "comments_count", "latest_comments", "created_at"]
+
+    def get_latest_comments(self, obj):
+        comments = obj.comments.order_by("-created_at")[:5]
+        return CommentSerializer(comments, many=True).data

@@ -1,53 +1,63 @@
-from rest_framework import generics, viewsets
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from django.shortcuts import get_object_or_404
-from django.contrib.auth.models import User
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.pagination import PageNumberPagination
+from django.db.models import Count
 
-from .models import Blog, Like, Comment
-from .serializers import BlogSerializer, CommentSerializer, RegisterSerializer
+from .models import Blog, Comment
+from .serializers import BlogListSerializer, BlogDetailSerializer, CommentSerializer
+from .permissions import IsAuthorOrReadOnly
 
+# Pagination for comments
+class CommentPagination(PageNumberPagination):
+    page_size = 5
 
-# Register API
-class RegisterView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = RegisterSerializer
-
-
-# Blog CRUD
+# Blog APIs
 class BlogViewSet(viewsets.ModelViewSet):
-    queryset = Blog.objects.all().order_by('-created_at')
-    serializer_class = BlogSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [
+        IsAuthenticatedOrReadOnly,
+        IsAuthorOrReadOnly
+    ]
+
+    def get_queryset(self):
+        return Blog.objects.select_related("author").annotate(
+            likes_count=Count("likes", distinct=True),
+            comments_count=Count("comments", distinct=True),
+        )
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return BlogDetailSerializer
+        return BlogListSerializer
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
+    @action(detail=True, methods=["post"])
+    def like(self, request, pk=None):
+        blog = self.get_object()
+        if request.user in blog.likes.all():
+            return Response({"detail": "Already liked"}, status=status.HTTP_400_BAD_REQUEST)
+        blog.likes.add(request.user)
+        return Response({"detail": "Blog liked"})
 
-# Like / Unlike
-class LikeToggleAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    @action(detail=True, methods=["post"])
+    def unlike(self, request, pk=None):
+        blog = self.get_object()
+        if request.user not in blog.likes.all():
+            return Response({"detail": "You have not liked this blog"}, status=status.HTTP_400_BAD_REQUEST)
+        blog.likes.remove(request.user)
+        return Response({"detail": "Blog unliked"})
 
-    def post(self, request, blog_id):
-        blog = get_object_or_404(Blog, id=blog_id)
-        like, created = Like.objects.get_or_create(user=request.user, blog=blog)
-
-        if not created:
-            like.delete()
-            return Response({"message": "Unliked"})
-        return Response({"message": "Liked"})
-
-
-# Comments
+# Comment APIs
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticated]
+    pagination_class = CommentPagination
 
     def get_queryset(self):
-        return Comment.objects.filter(blog_id=self.kwargs['blog_id'])
+        blog_id = self.kwargs["blog_id"]
+        return Comment.objects.filter(blog_id=blog_id).order_by("-created_at")
 
     def perform_create(self, serializer):
-        blog = get_object_or_404(Blog, id=self.kwargs['blog_id'])
-        serializer.save(user=self.request.user, blog=blog)
+        serializer.save(author=self.request.user, blog_id=self.kwargs["blog_id"])
