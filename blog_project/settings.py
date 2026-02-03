@@ -1,21 +1,15 @@
 from pathlib import Path
-
-# -------------------------------
-# BASE SETTINGS
-# -------------------------------
+ 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-change-this-key'
 
-# For submission / local testing
+ 
 DEBUG = True
 ALLOWED_HOSTS = ['*']
-
-# -------------------------------
-# INSTALLED APPS
-# -------------------------------
+ 
 INSTALLED_APPS = [
-    # Django default apps
+     
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -23,17 +17,17 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # Third-party apps
+     
     'rest_framework',
     'drf_yasg',
 
-    # Local apps
+     
     'blog',
 ]
 
-# -------------------------------
+ 
 # MIDDLEWARE
-# -------------------------------
+ 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -44,14 +38,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# -------------------------------
-# URL CONFIGURATION
-# -------------------------------
+ 
+ 
+ 
 ROOT_URLCONF = 'blog_project.urls'
 
-# -------------------------------
-# TEMPLATES
-# -------------------------------
+ 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -67,14 +59,10 @@ TEMPLATES = [
     },
 ]
 
-# -------------------------------
-# WSGI
-# -------------------------------
+ 
 WSGI_APPLICATION = 'blog_project.wsgi.application'
 
-# -------------------------------
-# DATABASE
-# -------------------------------
+ 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -82,9 +70,7 @@ DATABASES = {
     }
 }
 
-# -------------------------------
-# PASSWORD VALIDATION
-# -------------------------------
+ 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -92,35 +78,28 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# -------------------------------
-# INTERNATIONALIZATION
-# -------------------------------
+ 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# -------------------------------
-# STATIC FILES
-# -------------------------------
+ 
 STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# -------------------------------
-# REST FRAMEWORK SETTINGS
-# -------------------------------
+ 
 REST_FRAMEWORK = {
-    # Global pagination
+    
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 10,
 
-    # Default permissions
+    
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ],
 
-    # Default authentication
+    
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.BasicAuthentication",
